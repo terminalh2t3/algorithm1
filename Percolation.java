@@ -26,7 +26,7 @@ public class Percolation {
         // Connect virtual elements to top and bottom elements
         for (int i = 0; i < n; i++) {
             grid.union(0, i + 1);
-            grid.union(n * n + 1, n - i);
+            grid.union(n * n + 1, n * n - i);
         }
         this.n = n;
     }
@@ -40,6 +40,13 @@ public class Percolation {
             grid.union(idx, adjIdx);
         }
     }
+
+    public void open(int idx) {
+        int row = (int) Math.floor((idx - 1) / (double) this.n) + 1;
+        int col = (idx - 1) % n + 1;
+        open(row, col);
+    }
+
 
     private int getIndex(int row, int col) {
         if (row < 1 || row > n || col < 1 || col > n) {
