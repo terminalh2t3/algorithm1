@@ -1,81 +1,95 @@
-/* *****************************************************************************
+/* ****************************************************************************
  *  Name: Vu Tuan Anh
  *  Date: June 17
  *  Description: Assignment 1
- **************************************************************************** */
+ *****************************************************************************/
 
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class PercolationStats {
-    private int n;
-    private int trials;
-    private double[] x;
+    private static final double CONFIDENCE_95 = 1.96;
+
+    private final int n;
+    private final int trials;
+    private final double[] x;
+    private double cachedMean;
+    private double cachedStd;
 
     public PercolationStats(int n,
-                            int trials)    // perform trials independent experiments on an n-by-n grid
-    {
+                            int trials) {
         this.n = n;
         this.trials = trials;
         if (n <= 0 || trials <= 0)
-            throw new java.lang.IllegalArgumentException("n and trails must be possitive");
+            throw new IllegalArgumentException("n and trails must be possitive");
 
         x = new double[trials];
         for (int i = 0; i < trials; i++) {
             x[i] = simulate();
         }
+
+        cachedMean = -1.0;
+        cachedStd = -1.0;
     }
 
     private double simulate() {
         Percolation percolation = new Percolation(this.n);
-        List<Integer> blockedSites = new ArrayList<Integer>();
-        for (int i = 1; i <= this.n * this.n; i++) {
-            blockedSites.add(i);
-        }
-
 
         int openedSites = 0;
         while (!percolation.percolates()) {
             // random uniformly
-            int uniformIdx = StdRandom.uniform(blockedSites.size());
+            int uniformIdx = StdRandom.uniform(this.n * this.n);
+
             // open
-            percolation.open(blockedSites.get(uniformIdx));
-            // remove from blockedSites
-            blockedSites.remove(uniformIdx);
+            int idxToOpen = uniformIdx + 1 + this.n;
+            int row = (int) Math.floor((idxToOpen - 1) / (double) this.n);
+            int col = (idxToOpen - 1) % this.n + 1;
+
+            if (percolation.isOpen(row, col))
+                continue;
+
+            percolation.open(row, col);
             openedSites++;
         }
         return openedSites / (double) (this.n * this.n);
     }
 
-    public double mean()                          // sample mean of percolation threshold
-    {
-        return StdStats.mean(x);
+    public double mean() {
+        if (cachedMean < 0)
+            cachedMean = StdStats.mean(x);
+
+        return cachedMean;
     }
 
-    public double stddev()                        // sample standard deviation of percolation threshold
-    {
-        return StdStats.stddev(x);
+    public double stddev() {
+        if (cachedStd < 0)
+            cachedStd = StdStats.stddev(x);
+
+        return cachedStd;
     }
 
-    public double confidenceLo()                  // low  endpoint of 95% confidence interval
-    {
-        double xMean = mean();
-        double xStd = stddev();
-        return xMean - 1.96 * xStd / Math.sqrt(trials);
+    public double confidenceLo() {
+        if (cachedMean < 0)
+            mean();
+
+        if (cachedStd < 0)
+            stddev();
+
+        return cachedMean - CONFIDENCE_95 * cachedStd / Math.sqrt(trials);
     }
 
-    public double confidenceHi()                  // high endpoint of 95% confidence interval
-    {
-        double xMean = mean();
-        double xStd = stddev();
-        return xMean + 1.96 * xStd / Math.sqrt(trials);
+    public double confidenceHi() {
+        if (cachedMean < 0)
+            mean();
+
+        if (cachedStd < 0)
+            stddev();
+
+        return cachedMean + CONFIDENCE_95 * cachedStd / Math.sqrt(trials);
     }
 
-    public static void main(String[] args)        // test client (described below)
-    {
+    public static void main(String[] args) {
         int n = 10;
         int trials = 100;
         if (args.length >= 1)

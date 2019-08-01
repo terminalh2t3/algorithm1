@@ -16,5 +16,6 @@ public class Test {
         percolation.open(3, 1);
         System.out.println("Test [2,2] isFull? : " + percolation.isFull(2, 2));
         System.out.println("Percolate? : " + percolation.percolates());
+        System.out.println("Num open site? : " + percolation.numberOfOpenSites());
     }
 }
